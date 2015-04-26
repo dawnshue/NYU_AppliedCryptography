@@ -30,7 +30,7 @@ public class CryptosystemApp {
   LinkedList<Integer> quotient = new LinkedList<Integer>();
   //The important cryptosystem values
   //e: public key
-  int p, q, n, e, d;
+  public int p, q, n, e, d;
   
   /**
    * This is the main program, running through all the steps in the 
@@ -40,6 +40,9 @@ public class CryptosystemApp {
     this.isPrime(11,true);
   }
   private void run() {
+    /*
+     * PART 4
+     */
     System.out.println("104 =======================================");
     this.generateInitialpq();
     
@@ -59,6 +62,23 @@ public class CryptosystemApp {
     
     System.out.println("152 =======================================");
     this.getPrivateKey();
+    
+    System.out.println("156 =======================================");
+    this.showAllValues();
+    
+    /*
+     * PART 5
+     */
+    System.out.println("185 =======================================");
+    this.getDigitalCertificate();
+    System.out.println("187 =======================================");
+    this.getDigitalCertificateAsIntegers();
+    
+    /*
+     * PART 6
+     */
+    System.out.println("206 =======================================");
+    
   }
   
   private void print(boolean verbose, String message) {
@@ -238,7 +258,35 @@ public class CryptosystemApp {
     print(true,"### final d = "+d);
   }
 
-  private void get() {
+  private void showAllValues() {
+    System.out.println("p = "+p+" ("+getBitRepresentation(p)+")");
+    System.out.println("q = "+q+" ("+getBitRepresentation(q)+")");
+    System.out.println("n = "+n+" ("+getBitRepresentation(n)+")");
+    System.out.println("e = "+e+" ("+getBitRepresentation(e)+")");
+    System.out.println("d = "+d+" ("+getBitRepresentation(d)+")");
+  }
+  private String getBitRepresentation(int x) {
+    StringBuilder s = new StringBuilder(Integer.toBinaryString(x));
+    for(int b=s.length(); b<32; b++) {
+      s.insert(0, "0");
+    }
+    return s.toString();
+  }
+
+  private void getDigitalCertificate() {
+    //Determine r
+    
+    //Determine h(r)
+    
+    //Determine s
+  }
+  private void getDigitalCertificateAsIntegers() {
+    //Determine h(r)
+    
+    //Determine s
     
   }
+
+
+
 }
