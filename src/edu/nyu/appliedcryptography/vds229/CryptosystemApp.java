@@ -26,6 +26,8 @@ public class CryptosystemApp {
   private Random randomizer = new Random();
   //A list of past generated 7-bit random numbers so we don't test duplicates
   private List<Integer> pastvalues = new ArrayList<Integer>();
+  //The past quotients generated while checking the GCD(e,n), used to determine d
+  LinkedList<Integer> quotient = new LinkedList<Integer>();
   //The important cryptosystem values
   //e: public key
   int p, q, n, e, d;
@@ -49,11 +51,12 @@ public class CryptosystemApp {
     System.out.println("123 =======================================");
     this.getPrimePQ();
     
-    System.out.println("142 =======================================");
     n = p*q;
     this.debug("### final n = "+n);
+    
+    System.out.println("142 =======================================");
     this.getPublicKey();
-    this.debug("### final e = "+e);
+    
     System.out.println("152 =======================================");
     this.getPrivateKey();
   }
@@ -173,6 +176,7 @@ public class CryptosystemApp {
   }
   
   private void getPublicKey() {
+    boolean verbose = true;
     ArrayList<Integer> pastEvalues = new ArrayList<Integer>();
     e = 3;
     while(e<n && !isRelativelyPrime(e,n,true)) {
@@ -180,33 +184,35 @@ public class CryptosystemApp {
       if(e==n) {
         //No relatively prime value e found
         //Regenerate prime values p, q
-        this.print(true,"### No relatively prime e found. Regenerating primes p & q.");
+        this.print(verbose,"### No relatively prime e found. Regenerating primes p & q.");
         p = this.generateRandomNumber(false);
         q = this.generateRandomNumber(false);
         this.getPrimePQ();
-        this.print(true,"### New p = "+p);
-        this.print(true,"### New q = "+q);
+        this.print(verbose,"### New p = "+p);
+        this.print(verbose,"### New q = "+q);
         n = p*q;
-        this.print(true,"### New n = "+n);
+        this.print(verbose,"### New n = "+n);
         e = 3;
       }
     }
+    print(true,"### final e = "+e);
   }
   private boolean isRelativelyPrime(int e, int n, boolean verbose) {
     print(true,"Trying e = "+e);
     //Use Extended Euclidean Algorithm to determine if e is relatively prime
     int big = n;
     int small = e;
-    int r;
-    while(big%small > 1) {
-      r = big%small;
+    quotient = new LinkedList<Integer>();
+    
+    while(big%small > 0) {
+      quotient.add((int)(big/small));
+      int r = big%small;
       this.print(verbose,big+" = "+(int)(big/small)+"*"+small+" + "+r);
       big = small;
       small = r;
     }
-    r = big%small;
-    this.print(verbose,big+" = "+(int)(big/small)+"*"+small+" + "+r);
-    if(big%small == 1) {
+    if(small == 1) {
+      //if gcd = 1, then they are relatively prime
       this.print(verbose,e+" and "+n+" are relatively prime.");
       return true;
     } else {
@@ -215,7 +221,24 @@ public class CryptosystemApp {
     }
   }
   private void getPrivateKey() {
-    
+    boolean verbose = true;
+    int p0 = 0, p1 = 1;
+    while(quotient.size()>0) {
+      int temp = p1;
+      int quot = quotient.remove(0);
+      p1 = (p0 - p1*quot)%n;
+      print(verbose,"t = "+p0+" - "+temp+"*"+quot+" mod("+n+") = "+p1);
+      p0 = temp;
+      if(p1<0) {
+        print(verbose,"t = "+p1+" mod("+n+") = "+(n+p1));
+        p1 = n + p1;
+      }
+    }
+    d = p1;
+    print(true,"### final d = "+d);
   }
 
+  private void get() {
+    
+  }
 }
