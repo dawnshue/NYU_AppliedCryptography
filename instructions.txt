@@ -1,0 +1,4 @@
+The easiest way would probably be to import the CryptosystemApp.java file into an IDE such as Eclipse or NetBeans and compile/run it via the IDE.
+
+In the command line you can run it via the following commands:
+
