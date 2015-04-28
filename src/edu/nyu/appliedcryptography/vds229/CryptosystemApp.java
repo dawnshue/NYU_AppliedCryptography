@@ -84,7 +84,7 @@ public class CryptosystemApp {
   }
   public void run2(CryptosystemApp alice, CryptosystemApp trent) {
     /*
-     * PART 5 !!!!!!!!!!!!!!!!!!!! INCOMPLETE !!!!!!!!!!!!!!!!!!!!!!
+     * PART 5
      */
     System.out.println("185 =======================================");
     this.getDigitalCertificate(alice, trent);
@@ -102,9 +102,9 @@ public class CryptosystemApp {
     System.out.println("208 =======================================");
     this.print(true,"u = "+this.get32BitRepresentation(u));
     System.out.println("215 =======================================");
-    this.getDecryptedHash();
+    this.getAliceDecryption(alice);
     System.out.println("219 =======================================");
-    this.getEncryptedHash();
+    this.getBobEncryptionTrace(alice);
   }
   
   private void print(boolean verbose, String message) {
@@ -225,9 +225,10 @@ public class CryptosystemApp {
     boolean verbose = true;
     ArrayList<Integer> pastEvalues = new ArrayList<Integer>();
     e = 3;
-    while(e<n && !isRelativelyPrime(e,n,true)) {
+    int n2 = (p-1)*(q-1);
+    while(e<n2 && !isRelativelyPrime(e,n2,true)) {
       e++;
-      if(e==n) {
+      if(e==n2) {
         //No relatively prime value e found
         //Regenerate prime values p, q
         this.print(verbose,"-> No relatively prime e found. Regenerating primes p & q.");
@@ -237,16 +238,17 @@ public class CryptosystemApp {
         this.print(verbose,"-> New p = "+p);
         this.print(verbose,"-> New q = "+q);
         n = p*q;
+        n2 = (p-1)*(q-1);
         this.print(verbose,"-> New n = "+n);
         e = 3;
       }
     }
     print(true,"-> final e = "+e);
   }
-  private boolean isRelativelyPrime(int e, int n, boolean verbose) {
+  private boolean isRelativelyPrime(int e, int n2, boolean verbose) {
     print(true,"Trying e = "+e);
     //Use Extended Euclidean Algorithm to determine if e is relatively prime
-    int big = n;
+    int big = n2;
     int small = e;
     quotient = new LinkedList<Integer>();
     
@@ -259,25 +261,27 @@ public class CryptosystemApp {
     }
     if(small == 1) {
       //if gcd = 1, then they are relatively prime
-      this.print(verbose,e+" and "+n+" are relatively prime.");
+      this.print(verbose,e+" and "+n2+" are relatively prime.");
       return true;
     } else {
-      this.print(verbose,e+" and "+n+" are not relatively prime.");
+      this.print(verbose,e+" and "+n2+" are not relatively prime.");
       return false;
     }
   }
   private void getPrivateKey() {
+    //Get multiplicative inverse of e
     boolean verbose = true;
     int p0 = 0, p1 = 1;
+    int n2 = (p-1)*(q-1);
     while(quotient.size()>0) {
       int temp = p1;
       int quot = quotient.remove(0);
       p1 = (p0 - p1*quot)%n;
-      print(verbose,"t = "+p0+" - "+temp+"*"+quot+" mod("+n+") = "+p1);
+      print(verbose,"t = "+p0+" - "+temp+"*"+quot+" mod("+n2+") = "+p1);
       p0 = temp;
       if(p1<0) {
-        print(verbose,"t = "+p1+" mod("+n+") = "+(n+p1));
-        p1 = n + p1;
+        print(verbose,"t = "+p1+" mod("+n+") = "+(n2+p1));
+        p1 = n2 + p1;
       }
     }
     d = p1;
@@ -323,7 +327,7 @@ public class CryptosystemApp {
     //hr
     hr = this.getOnewayHash(r, trace);
     //s
-    s = this.getDecryption(hr, trent.d, trent.n, trace);
+    s = this.getFastExponentiation(hr, trent.d, trent.n, trace);
   }
   private String getR(String name, int n, int e) {
     //First part: name
@@ -366,12 +370,12 @@ public class CryptosystemApp {
     this.debug(""+ans);
     return ans;
   }
-  private int getDecryption(int c, int d, int n, boolean verbose) {
+  private int getFastExponentiation(int c, int d, int n, boolean verbose) {
     this.debug("c^d mod(n) = "+c+"^"+d+" mod("+n+")");
     //decrypt message m from cipher c: m = c^(d) mod(n)
     //Use fast exponentiation algorithm given on p110 in notes, figure 64
     String dbin = Integer.toBinaryString(d);
-    this.debug("d to binary: "+d+" -> "+dbin);
+    this.print(verbose, "d to binary: "+d+" -> "+dbin);
     this.print(verbose, "y = "+c);
     int y = c;
     for(int i=1; i<dbin.length(); i++) {
@@ -407,15 +411,21 @@ public class CryptosystemApp {
     u = Integer.parseInt(str.toString(),2);
     print(true,"u = "+u);
   }
-  private void getDecryptedHash() {
-    System.out.println("u = "+u+" ("+this.get32BitRepresentation(u)+")");
-    hu = this.getOnewayHash(this.get32BitRepresentation(u),false);
-    System.out.println("h(u) = "+hu+" ("+this.getByteRepresentation(hu)+")");
-    
-    
+  private void getAliceDecryption(CryptosystemApp alice) {
+    boolean verbose = true;
+    boolean trace = false;
+    this.print(verbose, "u = "+u+" ("+this.get32BitRepresentation(u)+")");
+    hu = this.getOnewayHash(this.get32BitRepresentation(u),trace);
+    this.print(verbose, "h(u) = "+hu+" ("+this.getByteRepresentation(hu)+")");
+    v = this.getFastExponentiation(hu, alice.d, alice.n, trace);
+    this.print(verbose, "v = "+v+" ("+this.get32BitRepresentation(v)+")");
+    ev = this.getFastExponentiation(v, alice.e, alice.n, trace);
+    this.print(verbose, "E(e,v) = "+ev+" ("+this.getByteRepresentation(ev)+")");
   }
-  private void getEncryptedHash() {
-    
+  private void getBobEncryptionTrace(CryptosystemApp alice) {
+    boolean verbose = true;
+    this.print(verbose, "Trace for encryption of "+v+" (E(e,v))");
+    this.getFastExponentiation(v, alice.e, alice.n, true);
   }
 
 }
