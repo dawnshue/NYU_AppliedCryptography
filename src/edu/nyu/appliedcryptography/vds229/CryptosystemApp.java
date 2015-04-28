@@ -53,7 +53,7 @@ public class CryptosystemApp {
    * project specification.
    */
   private void test() {
-    System.out.println(this.getR("Alice", 0, 0));
+    this.passesMillerRabinFastExp(8, 10, true);
   }
   public void run() {
     /*
@@ -194,31 +194,60 @@ public class CryptosystemApp {
   private boolean isPrime(int n, boolean verbose) {
     //Tests if the given int is a prime number by modified Miller-Rabin
     print(verbose,"Testing if "+n+" is prime:");
+    //List of tested values so that you don't calculate redundant values
     List<Integer> pastAvalues = new ArrayList<Integer>();
-    /*
+    int a = 0;
     for(int i=0; i<20; i++) {
-      int a;
+      //generate a random number 0 < a < n
       do {
         a = Math.abs(randomizer.nextInt())%n;
       } while(a == 0 || pastAvalues.contains(a));
       pastAvalues.add(a);
-      debug(verbose,"Test "+(i+1)+" with a = "+a);
+      this.debug("Test "+(i+1)+" with a = "+a);
       
-      //MODIFY TO BE CORRECT TO ALGORITHM
-      if(n%a == 0) {
-        print(verbose,n+" is not prime.");
+      if(!this.passesMillerRabinFastExp(a, n, false)) {
+        this.print(verbose,"Test "+(i+1)+" (a = "+a+") fails primality test for n = "+n);
+        this.passesMillerRabinFastExp(a, n, true);
         return false;
+      } else {
+        this.debug("Test "+(i+1)+" (a = "+a+") passes primality test for n.");
       }
     }
-    */
-    for(int i=3; i<n; i=i+2) {
-      if(n%i == 0) {
-        this.print(verbose,n+" is not prime, has factor "+i);
-        return false;
-      }
-    }
+    this.print(verbose,"Last test (a = "+a+") passes primality test for n.");
+    this.passesMillerRabinFastExp(a, n, true);
     this.print(verbose,n+" is probably prime");
     return true;
+  }
+  private boolean passesMillerRabinFastExp(int a, int n2, boolean verbose) {
+    //Fast Exponentiation method for obtaining a^(n-1) mod(n)
+    this.print(verbose,"Fast exponentiation for "+a+"^("+n2+"-1) mod("+n2+")");
+    //binary rep of n-1
+    String bin = Integer.toBinaryString(n2-1);
+    this.print(verbose,"Binary of (n-1) is "+bin);
+    int y = a;
+    this.print(verbose, "y = "+y);
+    int square;
+    for(int i=1; i<bin.length(); i++) {
+      square = (int)Math.pow(y, 2)%n2;
+      this.print(verbose, "y = "+y+"^2 mod("+n2+") = "+square);
+      if(y!=1 && y!=(n2-1) && square==1) {
+        this.print(verbose, "FAIL: y = "+y+" (!= 1 or n-1) and y^2 mod(n) = "+square);
+        return false;
+      }
+      y = square;
+      if(bin.charAt(i) == '1') {
+        square = (a*y)%n2;
+        this.print(verbose, "y = "+y+"*"+a+" mod("+n2+") = "+square);
+        y = square;
+      }
+    }
+    if(y != 1) {
+      this.print(verbose, "Final y = a^(n-1)mod(n) = "+y+" != 1, so n cannot be prime.");
+      return false;
+    } else {
+      this.print(verbose, "Final y = a^(n-1)mod(n) = "+y+" != 1, so n probably prime.");
+      return true;
+    }
   }
   
   private void getPublicKey() {
@@ -276,11 +305,11 @@ public class CryptosystemApp {
     while(quotient.size()>0) {
       int temp = p1;
       int quot = quotient.remove(0);
-      p1 = (p0 - p1*quot)%n;
+      p1 = (p0 - p1*quot)%n2;
       print(verbose,"t = "+p0+" - "+temp+"*"+quot+" mod("+n2+") = "+p1);
       p0 = temp;
       if(p1<0) {
-        print(verbose,"t = "+p1+" mod("+n+") = "+(n2+p1));
+        print(verbose,"t = "+p1+" mod("+n2+") = "+(n2+p1));
         p1 = n2 + p1;
       }
     }
